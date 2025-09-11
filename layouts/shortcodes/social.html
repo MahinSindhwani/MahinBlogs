@@ -1,0 +1,11 @@
+﻿{{ if templates.Exists "partials/social-icons.html" }}
+  {{ partial "social-icons.html" (dict "align" "left") }}
+{{ else if templates.Exists "partials/social_icons.html" }}
+  {{ partial "social_icons.html" (dict "align" "left") }}
+{{ else }}
+  <div class="social-icons">
+    {{- range site.Params.socialIcons -}}
+      <a href="{{ .url | safeURL }}" target="_blank" rel="noopener noreferrer" title="{{ .name | title }}">{{ .name }}</a>
+    {{- end -}}
+  </div>
+{{ end }}
