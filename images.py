@@ -103,7 +103,7 @@ def replace_one(m):
     # Build Markdown image link with URL-encoded filename
     alt = os.path.splitext(base)[0]
     url_name = urllib.parse.quote(base)
-    return f"![{alt}](/images/{url_name})"
+    return f"![{alt}](images/{url_name})"
 
 # Walk all markdown files under posts_dir
 for root, _, files in os.walk(posts_dir):

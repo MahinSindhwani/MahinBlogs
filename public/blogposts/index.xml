@@ -2,19 +2,19 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
   <channel>
     <title>BlogPosts on Blogs</title>
-    <link>https://examplesite.com/blogposts/</link>
+    <link>http://localhost:1313/MahinBlogs/blogposts/</link>
     <description>Recent content in BlogPosts on Blogs</description>
     <generator>Hugo -- 0.150.0</generator>
     <language>en</language>
     <lastBuildDate>Wed, 10 Sep 2025 00:00:00 +0000</lastBuildDate>
-    <atom:link href="https://examplesite.com/blogposts/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="http://localhost:1313/MahinBlogs/blogposts/index.xml" rel="self" type="application/rss+xml" />
     <item>
       <title>First Blog Post</title>
-      <link>https://examplesite.com/blogposts/first-blog-post/</link>
+      <link>http://localhost:1313/MahinBlogs/blogposts/first-blog-post/</link>
       <pubDate>Wed, 10 Sep 2025 00:00:00 +0000</pubDate>
-      <guid>https://examplesite.com/blogposts/first-blog-post/</guid>
+      <guid>http://localhost:1313/MahinBlogs/blogposts/first-blog-post/</guid>
       <description>&lt;h1 id=&#34;heading&#34;&gt;Heading&lt;/h1&gt;
-&lt;p&gt;&lt;img alt=&#34;e9c7498d-b56c-4e05-b057-1d8320e68dc9&#34; loading=&#34;lazy&#34; src=&#34;https://examplesite.com/images/e9c7498d-b56c-4e05-b057-1d8320e68dc9.jpg&#34;&gt;&lt;/p&gt;</description>
+&lt;p&gt;&lt;img alt=&#34;e9c7498d-b56c-4e05-b057-1d8320e68dc9&#34; loading=&#34;lazy&#34; src=&#34;images/e9c7498d-b56c-4e05-b057-1d8320e68dc9.jpg&#34;&gt;&lt;/p&gt;</description>
     </item>
   </channel>
 </rss>
