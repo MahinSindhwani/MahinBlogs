@@ -35,81 +35,179 @@
 
 # print("Markdown files processed and images copied successfully.")
 
+# import os
+# import re
+# import shutil
+# import urllib.parse
+
+# # === Paths ===
+# posts_dir = r"E:\MahinBlogs\content"            # scan all content recursively
+# attachments_dir = r"E:\MahinObs\attachments"     # your Obsidian attachments root
+# static_images_dir = r"E:\MahinBlogs\static\images"
+
+# # Make sure destination exists
+# os.makedirs(static_images_dir, exist_ok=True)
+
+# # Build an index of every image under attachments_dir: {lower_filename: [full_paths]}
+# image_exts = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
+# index = {}
+# for root, _, files in os.walk(attachments_dir):
+#     for f in files:
+#         ext = os.path.splitext(f)[1].lower()
+#         if ext in image_exts:
+#             key = f.lower()
+#             index.setdefault(key, []).append(os.path.join(root, f))
+
+# # Regex to match Obsidian wikilinks that refer to image files.
+# # - optional leading '!' for embeds
+# # - capture the path/filename up to extension
+# # - allow optional '|...' after filename (size/alias), which we ignore
+# pat = re.compile(
+#     r'!?\[\[([^\]\|]+\.(?:png|jpg|jpeg|gif|webp|svg))(?:\|[^\]]*)?\]\]',
+#     re.IGNORECASE
+# )
+
+# changed_files = 0
+# copied = 0
+# missing = []
+
+# def replace_one(m):
+#     """Convert one wikilink to Markdown image link and schedule copy."""
+#     target = m.group(1)  # e.g., 'Pasted image.png' or 'attachments/foo.jpg'
+#     base = os.path.basename(target)  # filename only
+#     key = base.lower()
+
+#     # Find the source file
+#     src_path = None
+#     # First try direct join if target included a subfolder that lives under attachments_dir
+#     direct_candidate = os.path.join(attachments_dir, target)
+#     if os.path.exists(direct_candidate):
+#         src_path = direct_candidate
+#     else:
+#         # Fall back to lookup by filename anywhere under attachments_dir
+#         matches = index.get(key, [])
+#         if matches:
+#             src_path = matches[0]  # take the first match
+#     if not src_path:
+#         missing.append(target)
+#         # Keep the original text unchanged if we didn't find the file
+#         return m.group(0)
+
+#     # Copy to static/images if not already there
+#     dest_path = os.path.join(static_images_dir, base)
+#     if not os.path.exists(dest_path):
+#         shutil.copy2(src_path, dest_path)
+#         global copied
+#         copied += 1
+
+#     # Build Markdown image link with URL-encoded filename
+#     alt = os.path.splitext(base)[0]
+#     url_name = urllib.parse.quote(base)
+#     return f'{{{{< img src="/images/{url_name}" alt="{alt}" >}}}}'
+
+# # Walk all markdown files under posts_dir
+# for root, _, files in os.walk(posts_dir):
+#     for fname in files:
+#         if fname.lower().endswith((".md", ".markdown")):
+#             path = os.path.join(root, fname)
+#             with open(path, "r", encoding="utf-8") as f:
+#                 content = f.read()
+
+#             new_content = pat.sub(replace_one, content)
+
+#             if new_content != content:
+#                 with open(path, "w", encoding="utf-8") as f:
+#                     f.write(new_content)
+#                 changed_files += 1
+
+# print(f"Updated {changed_files} markdown files.")
+# print(f"Copied {copied} image(s) to {static_images_dir}.")
+# if missing:
+#     print("Images referenced but not found under attachments:")
+#     for m in sorted(set(missing)):
+#         print("  -", m)
+
+
+# images.py
 import os
 import re
 import shutil
 import urllib.parse
 
-# === Paths ===
-posts_dir = r"E:\MahinBlogs\content"            # scan all content recursively
-attachments_dir = r"E:\MahinObs\attachments"     # your Obsidian attachments root
-static_images_dir = r"E:\MahinBlogs\static\images"
+# ======== EDIT THESE PATHS ========
+posts_dir         = r"E:\MahinBlogs\content"          # scan all markdown here (recursively)
+vault_root        = r"E:\MahinObs"                    # your Obsidian vault root
+attachments_dir   = r"E:\MahinObs\attachments"        # preferred attachments folder
+static_images_dir = r"E:\MahinBlogs\static\images"    # Hugo serves this as /images/...
+# ==================================
 
-# Make sure destination exists
 os.makedirs(static_images_dir, exist_ok=True)
+print("[CFG] posts_dir:", posts_dir)
+print("[CFG] static_images_dir:", static_images_dir)
 
-# Build an index of every image under attachments_dir: {lower_filename: [full_paths]}
+# Search both 'attachments' and the whole vault (attachments wins on duplicates)
+search_roots = [attachments_dir, vault_root]
+
+# Index all image files by filename (case-insensitive)
 image_exts = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"}
 index = {}
-for root, _, files in os.walk(attachments_dir):
-    for f in files:
-        ext = os.path.splitext(f)[1].lower()
-        if ext in image_exts:
-            key = f.lower()
-            index.setdefault(key, []).append(os.path.join(root, f))
+for root in search_roots:
+    if not os.path.exists(root):
+        continue
+    for r, _, files in os.walk(root):
+        for f in files:
+            if os.path.splitext(f)[1].lower() in image_exts:
+                index.setdefault(f.lower(), []).append(os.path.join(r, f))
 
-# Regex to match Obsidian wikilinks that refer to image files.
-# - optional leading '!' for embeds
-# - capture the path/filename up to extension
-# - allow optional '|...' after filename (size/alias), which we ignore
+# Match Obsidian wikilinks to image files:
+# - optional leading '!' for embed
+# - filename (or subpath) ending with an image extension
+# - optional '|...' (size/alias) after filename
 pat = re.compile(
     r'!?\[\[([^\]\|]+\.(?:png|jpg|jpeg|gif|webp|svg))(?:\|[^\]]*)?\]\]',
     re.IGNORECASE
 )
 
-changed_files = 0
-copied = 0
+stats = {"changed": 0, "copied": 0}
 missing = []
 
 def replace_one(m):
-    """Convert one wikilink to Markdown image link and schedule copy."""
-    target = m.group(1)  # e.g., 'Pasted image.png' or 'attachments/foo.jpg'
-    base = os.path.basename(target)  # filename only
-    key = base.lower()
+    target = m.group(1)  # e.g., 'e9c7...jpg' or 'attachments/foo.png'
+    # Try exact subpath under attachments first
+    direct = os.path.join(attachments_dir, target)
+    src_path = direct if os.path.exists(direct) else None
 
-    # Find the source file
-    src_path = None
-    # First try direct join if target included a subfolder that lives under attachments_dir
-    direct_candidate = os.path.join(attachments_dir, target)
-    if os.path.exists(direct_candidate):
-        src_path = direct_candidate
-    else:
-        # Fall back to lookup by filename anywhere under attachments_dir
-        matches = index.get(key, [])
-        if matches:
-            src_path = matches[0]  # take the first match
+    if not src_path:
+        base = os.path.basename(target).lower()
+        candidates = index.get(base, [])
+        if candidates:
+            src_path = candidates[0]
+
     if not src_path:
         missing.append(target)
-        # Keep the original text unchanged if we didn't find the file
-        return m.group(0)
+        print(f"[MISS] {target}")
+        return m.group(0)  # leave original text unchanged
 
-    # Copy to static/images if not already there
-    dest_path = os.path.join(static_images_dir, base)
+    # Preserve real filename & case (prevents case issues on Linux/Pages)
+    base_real = os.path.basename(src_path)
+    dest_path = os.path.join(static_images_dir, base_real)
     if not os.path.exists(dest_path):
         shutil.copy2(src_path, dest_path)
-        global copied
-        copied += 1
+        stats["copied"] += 1
+        print(f"[COPY] {src_path} -> {dest_path}")
+    else:
+        print(f"[SKIP] already present: {dest_path}")
 
-    # Build Markdown image link with URL-encoded filename
-    alt = os.path.splitext(base)[0]
-    url_name = urllib.parse.quote(base)
-    return f"![{alt}](images/{url_name})"
+    # Build the shortcode: Hugo will render via layouts/shortcodes/img.html
+    alt = os.path.splitext(base_real)[0]
+    url_name = urllib.parse.quote(base_real)  # spaces -> %20 etc.
+    return f'{{{{< img src="images/{url_name}" alt="{alt}" >}}}}'
 
 # Walk all markdown files under posts_dir
-for root, _, files in os.walk(posts_dir):
+for r, _, files in os.walk(posts_dir):
     for fname in files:
         if fname.lower().endswith((".md", ".markdown")):
-            path = os.path.join(root, fname)
+            path = os.path.join(r, fname)
             with open(path, "r", encoding="utf-8") as f:
                 content = f.read()
 
@@ -118,11 +216,12 @@ for root, _, files in os.walk(posts_dir):
             if new_content != content:
                 with open(path, "w", encoding="utf-8") as f:
                     f.write(new_content)
-                changed_files += 1
+                stats["changed"] += 1
+                print(f"[WRITE] {path}")
 
-print(f"Updated {changed_files} markdown files.")
-print(f"Copied {copied} image(s) to {static_images_dir}.")
+print(f"[DONE] Updated {stats['changed']} markdown files; copied {stats['copied']} image(s).")
 if missing:
-    print("Images referenced but not found under attachments:")
+    print("Referenced but NOT found in vault:")
     for m in sorted(set(missing)):
         print("  -", m)
+

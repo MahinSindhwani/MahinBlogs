@@ -1,0 +1,4 @@
+﻿{{- $raw := .Get "src" -}}
+{{- $src := $raw | replaceRE "^/" "" -}}  {{/* strip any leading slash */}}
+{{- $alt := .Get "alt" | default "" -}}
+<img loading="lazy" src="{{ $src | absURL }}" alt="{{ $alt }}">
